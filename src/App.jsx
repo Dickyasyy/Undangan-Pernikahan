@@ -20,7 +20,7 @@ import {
   gendong,
   akadNikah,
   date,
-  backsound
+  backsound,
 } from "./assets";
 
 const App = () => {
@@ -386,12 +386,15 @@ const App = () => {
 
           {/* Footer RSVP */}
           <footer className="w-full bg-stone-100">
-            {/* Container dengan Aspect Ratio Foto Asli 827/687 */}
+            {/* Perubahan: MD:aspectRatio agar mobile fleksibel, min-h-screen di mobile supaya lega */}
             <div
-              className="relative w-full overflow-hidden"
-              style={{ aspectRatio: "827 / 687" }}
+              className="relative w-full overflow-hidden flex items-center justify-center py-20 md:py-0"
+              style={{
+                aspectRatio: window.innerWidth > 768 ? "827 / 687" : "auto",
+                minHeight: "100 flex",
+              }}
             >
-              {/* Foto Background - Full & Terang */}
+              {/* Foto Background */}
               <div
                 className="absolute inset-0 z-0"
                 style={{
@@ -400,36 +403,38 @@ const App = () => {
                   backgroundPosition: "center",
                   backgroundRepeat: "no-repeat",
                 }}
-              ></div>
+              >
+                {/* Overlay tambahan agar teks lebih terbaca di mobile jika foto terlalu ramai */}
+                <div className="absolute inset-0 bg-black/10 md:bg-transparent"></div>
+              </div>
 
-              {/* Konten Teks di Tengah Foto */}
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-4 text-center">
+              {/* Konten Teks */}
+              <div className="relative z-10 flex flex-col items-center justify-center px-6 text-center w-full">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 1 }}
-                  // Gaya Glassmorphism konsisten dengan bagian atas
-                  className="bg-white/10 backdrop-blur-md p-8 md:p-12 rounded-3xl border border-white/20 shadow-xl max-w-lg"
+                  // Perubahan: Lebar disesuaikan (w-full max-w-sm) agar tidak mentok pinggir layar hp
+                  className="bg-white/20 backdrop-blur-lg p-8 md:p-12 rounded-[40px] border border-white/30 shadow-2xl w-full max-w-[90%] md:max-w-lg"
                 >
-                  {/* Teks Putih dengan Drop Shadow konsisten dengan gaya Nama Mempelai */}
                   <h2 className="text-4xl md:text-6xl font-cursive text-white font-bold drop-shadow-lg mb-6">
                     Terima Kasih
                   </h2>
 
-                  <p className="text-white font-medium italic mb-8 text-sm md:text-lg leading-relaxed drop-shadow-md opacity-90">
+                  <p className="text-white font-medium italic mb-8 text-base md:text-lg leading-relaxed drop-shadow-md">
                     "Kehadiran dan doa restu Bapak/Ibu/Saudara/i merupakan
                     kebahagiaan bagi kami."
                   </p>
 
                   <a
                     href="https://wa.me/6289636758016?text=Halo Nama mempelai, saya akan datang ke pernikahan kalian!"
-                    className="inline-flex items-center gap-3 bg-white text-stone-900 px-8 py-3 rounded-full font-bold hover:bg-stone-100 transition-all shadow-lg active:scale-95 text-sm md:text-base"
+                    className="inline-flex items-center gap-3 bg-white text-stone-900 px-8 py-4 rounded-full font-bold hover:bg-stone-100 transition-all shadow-xl active:scale-95 text-sm md:text-base"
                   >
                     <FaWhatsapp className="text-xl text-green-600" />
                     Konfirmasi Kehadiran
                   </a>
 
-                  <div className="mt-12 md:mt-16 text-[9px] md:text-[10px] text-stone-100 uppercase tracking-[0.4em] font-bold opacity-70">
+                  <div className="mt-12 text-[10px] text-white/80 uppercase tracking-[0.4em] font-bold">
                     Created with ❤️ by Dicky
                   </div>
                 </motion.div>
