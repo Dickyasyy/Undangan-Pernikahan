@@ -10,6 +10,9 @@ import love from './animasi/love.png';
 import lari from './animasi/lari.png';
 import gendong from './animasi/gendong.png';
 
+// Import Musik
+import backsound from './musik/musik wedding.mp3';
+
 // Import Animasi 
 
 // Export semuanya
@@ -24,4 +27,5 @@ export {
   lari,
   gendong,
   date,
+  backsound,
 };

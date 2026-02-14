@@ -20,6 +20,7 @@ import {
   gendong,
   akadNikah,
   date,
+  backsound
 } from "./assets";
 
 const App = () => {
@@ -52,7 +53,7 @@ const App = () => {
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play();
+      audio.play().catch((err) => console.log("Playback error:", err));
     }
     setIsPlaying(!isPlaying);
   };
@@ -60,24 +61,33 @@ const App = () => {
   const openInvitation = () => {
     setIsOpen(true);
     setIsPlaying(true);
-    setTimeout(() => {
-      document.getElementById("bg-music").play();
-    }, 500);
+    // Kita jalankan audio langsung saat interaksi klik
+    const audio = document.getElementById("bg-music");
+    if (audio) {
+      audio.play().catch((err) => console.log("Autoplay blocked:", err));
+    }
   };
 
   return (
     <div className="bg-stone-50 min-h-screen font-serif text-stone-800">
       <audio id="bg-music" loop>
-        <source src="" type="audio/mpeg" />
+        <source src={backsound} type="audio/mpeg" />
       </audio>
 
       {/* --- TOMBOL MUSIK FLOATING --- */}
       {isOpen && (
         <button
           onClick={toggleMusic}
-          className="fixed bottom-6 right-6 z-50 p-4 bg-white/70 backdrop-blur-md rounded-full shadow-xl text-stone-700 hover:scale-110 transition-all"
+          className="fixed bottom-6 right-6 z-50 p-4 bg-white/70 backdrop-blur-md rounded-full shadow-xl text-stone-700 hover:scale-110 transition-all flex items-center justify-center w-12 h-12 md:w-14 md:h-14"
         >
-          {isPlaying ? <FaPause className="animate-spin-slow" /> : <FaPlay />}
+          {/* Animasi spin hanya saat lagu berputar */}
+          <div className={`${isPlaying ? "animate-spin-slow" : ""}`}>
+            {isPlaying ? (
+              <FaMusic className="text-red-400" />
+            ) : (
+              <FaPlay className="ml-1" />
+            )}
+          </div>
         </button>
       )}
 
