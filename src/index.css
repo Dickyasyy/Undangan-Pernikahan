@@ -1,17 +1,54 @@
+/* 1. Import Font dari Google Fonts paling atas */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Great+Vibes&family=Montserrat:wght@100;300;400;600&display=swap');
+
+/* 2. Import Tailwind */
 @import "tailwindcss";
 
+/* 3. Global Styling */
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Memberikan font default agar tidak kaku */
+    font-family: 'Cormorant Garamond', serif;
   }
 }
 
-/* Custom class untuk rotasi pelan piringan musik */
-.animate-spin-slow {
-  animation: spin 3s linear infinite;
+/* 4. Custom Font Classes */
+.font-serif-elegant {
+  font-family: 'Cormorant Garamond', serif;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.font-cursive {
+  font-family: 'Great Vibes', cursive;
+}
+
+.font-sans-clean {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* 5. Custom Animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 10s linear infinite;
+}
+
+/* Tambahan: Shadow untuk teks agar lebih terbaca di atas background foto */
+.text-shadow-elegant {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }

@@ -1,447 +1,1373 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import {
   FaHeart,
   FaCalendarAlt,
   FaMapMarkerAlt,
-  FaWhatsapp,
   FaMusic,
-  FaPause,
-  FaPlay,
+  FaWhatsapp,
+  FaTrash,
+  FaChevronLeft,
+  FaChevronRight,
+  FaUserFriends,
+  FaBuilding,
+  FaImages,
+  FaGift,
+  FaCommentDots,
+  FaQrcode,
+  FaTimes,
 } from "react-icons/fa";
-import {
-  fotoLaki,
-  fotoPerempuan,
-  gabungan,
-  backgroundUndangan,
-  ikatan,
-  lari,
-  love,
-  gendong,
-  akadNikah,
-  date,
-  backsound,
-} from "./assets";
+import backsound from "./assets/musik/Janji Suci.mp3";
 
-const App = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({});
+const assets = {
+  bgFloral:
+    "https://images.unsplash.com/photo-1526047932273-341f2a7631f9?q=80&w=1920&auto=format&fit=cover",
+  bgCover:
+    "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1920&auto=format&fit=cover",
+  fotoPria:
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=cover",
+  fotoWanita:
+    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=cover",
+  backsound: backsound,
+};
 
-  // Target Tanggal Pernikahan
-  const targetDate = new Date("2026-12-31T08:00:00").getTime();
+// --- COMPONENTS ---
+const Countdown = ({ targetDate }) => {
+  const [timeLeft, setTimeLeft] = useState({
+    Hari: 0,
+    Jam: 0,
+    Menit: 0,
+    Detik: 0,
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date().getTime();
-      const difference = targetDate - now;
-
-      setTimeLeft({
-        hari: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        jam: Math.floor(
-          (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-        ),
-        menit: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-        detik: Math.floor((difference % (1000 * 60)) / 1000),
-      });
+      const distance = new Date(targetDate).getTime() - now;
+      if (distance < 0) {
+        clearInterval(timer);
+      } else {
+        setTimeLeft({
+          Hari: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          Jam: Math.floor(
+            (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+          ),
+          Menit: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          Detik: Math.floor((distance % (1000 * 60)) / 1000),
+        });
+      }
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [targetDate]);
 
-  const toggleMusic = () => {
-    const audio = document.getElementById("bg-music");
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play().catch((err) => console.log("Playback error:", err));
-    }
-    setIsPlaying(!isPlaying);
+  return (
+    <div className="flex justify-center gap-4 mt-6">
+      {Object.entries(timeLeft).map(([label, value]) => (
+        <motion.div
+          key={label}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 20,
+            delay: 0.2,
+          }}
+          className="text-center"
+        >
+          <div className="bg-white/30 backdrop-blur-sm w-12 h-12 flex items-center justify-center rounded-lg text-lg font-bold border border-white/40 text-stone-800">
+            {value}
+          </div>
+          <p className="text-[10px] uppercase mt-1 opacity-70 tracking-widest text-stone-600">
+            {label}
+          </p>
+        </motion.div>
+      ))}
+    </div>
+  );
+};
+
+const GlassCard = ({ children, className = "" }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 40 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-100px" }}
+    transition={{ duration: 0.8, ease: "easeOut" }}
+    className={`bg-white/40 backdrop-blur-sm border border-white/60 shadow-xl rounded-[40px] p-8 md:p-12 ${className}`}
+  >
+    {children}
+  </motion.div>
+);
+
+// Season Navigation Component
+const SeasonNav = ({ activeSeason, setActiveSeason, scrollToSection }) => {
+  const menuItems = [
+    { id: 1, name: "Profil", icon: FaUserFriends, section: "profil" },
+    { id: 2, name: "Acara", icon: FaBuilding, section: "acara" },
+    { id: 3, name: "Galeri", icon: FaImages, section: "galeri" },
+    { id: 4, name: "RSVP", icon: FaGift, section: "rsvp" },
+    { id: 5, name: "Ucapan", icon: FaCommentDots, section: "ucapan" },
+  ];
+
+  return (
+    <motion.div
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 200, damping: 25 }}
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white/20 backdrop-blur-lg border-t border-white/40 shadow-2xl"
+    >
+      <div className="max-w-lg mx-auto px-4 py-3">
+        <div className="flex justify-around items-center">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => scrollToSection(item.section)}
+              className={`p-3 rounded-2xl transition-all duration-500 ${
+                activeSeason === item.id
+                  ? "bg-[#D4AF37] text-white scale-110 shadow-lg"
+                  : "text-stone-600 hover:text-[#D4AF37] hover:bg-white/40"
+              }`}
+            >
+              <item.icon size={24} />
+            </button>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Pulsing Button Component (lebih lambat dari buka undangan)
+const PulsingButton = ({ children, onClick, className = "", icon: Icon }) => {
+  return (
+    <motion.button
+      onClick={onClick}
+      animate={{ scale: [1, 1.05, 1] }}
+      transition={{
+        repeat: Infinity,
+        duration: 3,
+        ease: "easeInOut",
+      }}
+      className={className}
+    >
+      {Icon && <Icon className="inline-block mr-2" />}
+      {children}
+    </motion.button>
+  );
+};
+
+// Particle Effect Component untuk Cover
+const CoverParticleEffect = () => {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {[...Array(30)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute text-pink-300/30"
+          initial={{
+            x: Math.random() * window.innerWidth,
+            y: -20,
+            rotate: 0,
+            scale: 0.5 + Math.random() * 0.8,
+          }}
+          animate={{
+            y: window.innerHeight + 100,
+            x: `calc(${Math.random() * 100}vw + ${Math.random() * 100}px)`,
+            rotate: 360,
+          }}
+          transition={{
+            duration: 8 + Math.random() * 10,
+            repeat: Infinity,
+            delay: Math.random() * 5,
+            ease: "linear",
+          }}
+        >
+          {i % 3 === 0 ? "🌸" : i % 3 === 1 ? "🌺" : "🌸"}
+        </motion.div>
+      ))}
+    </div>
+  );
+};
+
+// QR Code Modal Component
+const QRCodeModal = ({ guestName, onClose }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+        className="bg-white/20 backdrop-blur-xl p-6 rounded-[40px] border border-white/40 shadow-2xl max-w-xs w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-white font-bold text-lg">Check In</h3>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all"
+          >
+            <FaTimes size={16} />
+          </button>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl mb-4">
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=CheckIn-${guestName}-${new Date().toISOString()}`}
+            alt="QR Check In"
+            className="w-full h-auto"
+          />
+        </div>
+
+        <p className="text-white text-center text-sm mb-2">
+          Nama: <span className="font-bold">{guestName}</span>
+        </p>
+        <p className="text-white/70 text-center text-xs">
+          Scan QR code untuk check in
+        </p>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const App = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [guestName, setGuestName] = useState("Tamu Undangan");
+  const [selectedPhoto, setSelectedPhoto] = useState(0);
+  const [wishName, setWishName] = useState("");
+  const [wishMessage, setWishMessage] = useState("");
+  const [activeSeason, setActiveSeason] = useState(1);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [showCoverEffect, setShowCoverEffect] = useState(true);
+  const [allWishes, setAllWishes] = useState(() => {
+    const saved = localStorage.getItem("wedding_wishes");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Refs for scrolling
+  const profilRef = useRef(null);
+  const acaraRef = useRef(null);
+  const galeriRef = useRef(null);
+  const rsvpRef = useRef(null);
+  const ucapanRef = useRef(null);
+
+  const scrollToSection = (section) => {
+    const refs = {
+      profil: profilRef,
+      acara: acaraRef,
+      galeri: galeriRef,
+      rsvp: rsvpRef,
+      ucapan: ucapanRef,
+    };
+
+    const sectionIds = {
+      profil: 1,
+      acara: 2,
+      galeri: 3,
+      rsvp: 4,
+      ucapan: 5,
+    };
+
+    setActiveSeason(sectionIds[section]);
+    refs[section].current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
-  const openInvitation = () => {
-    setIsOpen(true);
-    setIsPlaying(true);
-    // Kita jalankan audio langsung saat interaksi klik
-    const audio = document.getElementById("bg-music");
-    if (audio) {
-      audio.play().catch((err) => console.log("Autoplay blocked:", err));
+  // Intersection Observer untuk update active season berdasarkan scroll
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: "-20% 0px -20% 0px",
+      threshold: 0,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const sectionId = entry.target.getAttribute("data-section");
+          const sectionMap = {
+            profil: 1,
+            acara: 2,
+            galeri: 3,
+            rsvp: 4,
+            ucapan: 5,
+          };
+          setActiveSeason(sectionMap[sectionId] || 1);
+        }
+      });
+    }, options);
+
+    const sections = [profilRef, acaraRef, galeriRef, rsvpRef, ucapanRef];
+    sections.forEach((ref) => {
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [isOpen]);
+
+  const handleSendWish = (e) => {
+    e.preventDefault();
+    if (wishName && wishMessage) {
+      const now = new Date();
+      const optionsDate = { day: "numeric", month: "long", year: "numeric" };
+      const optionsTime = { hour: "2-digit", minute: "2-digit" };
+
+      const newWish = {
+        name: wishName,
+        message: wishMessage,
+        time: `${now.toLocaleDateString(
+          "id-ID",
+          optionsDate
+        )} • ${now.toLocaleTimeString("id-ID", optionsTime)}`,
+      };
+
+      const updatedWishes = [newWish, ...allWishes];
+      setAllWishes(updatedWishes);
+      localStorage.setItem("wedding_wishes", JSON.stringify(updatedWishes));
+      setWishName("");
+      setWishMessage("");
     }
+  };
+
+  const handleDeleteWish = (indexToDelete) => {
+    const updatedWishes = allWishes.filter(
+      (_, index) => index !== indexToDelete
+    );
+    setAllWishes(updatedWishes);
+    localStorage.setItem("wedding_wishes", JSON.stringify(updatedWishes));
+  };
+
+  const galleryImages = [
+    "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=800",
+    "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800",
+    "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=800",
+    "https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=800",
+    "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=800",
+    "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=800",
+    "https://images.unsplash.com/photo-1541250848049-b4f7141dca3f?q=80&w=800",
+    "https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=800",
+  ];
+
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get("to");
+    if (name) {
+      setGuestName(decodeURIComponent(name).replace(/\+/g, " "));
+    }
+  }, []);
+
+  const handleOpen = () => {
+    setIsOpen(true);
+    setShowCoverEffect(false);
+    setIsPlaying(true);
+
+    // Confetti yang lebih meriah
+    const count = 200;
+    const defaults = {
+      origin: { y: 0.7 },
+      colors: [
+        "#D4AF37",
+        "#ffffff",
+        "#c81919",
+        "#4CAF50",
+        "#FF69B4",
+        "#4169E1",
+      ],
+    };
+
+    function fire(particleRatio, opts) {
+      confetti({
+        ...defaults,
+        ...opts,
+        particleCount: Math.floor(count * particleRatio),
+      });
+    }
+
+    fire(0.25, { spread: 26, startVelocity: 55 });
+    fire(0.2, { spread: 60 });
+    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+    fire(0.1, { spread: 120, startVelocity: 45 });
+
+    // Confetti tambahan dari samping
+    setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.5 },
+      });
+      confetti({
+        particleCount: 100,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.5 },
+      });
+    }, 200);
+
+    setTimeout(() => audioRef.current?.play(), 500);
   };
 
   return (
-    <div className="bg-stone-50 min-h-screen font-serif text-stone-800">
-      <audio id="bg-music" loop>
-        <source src={backsound} type="audio/mpeg" />
-      </audio>
+    <div className="min-h-screen text-stone-800 font-serif overflow-x-hidden relative bg-stone-100">
+      <audio ref={audioRef} loop src={assets.backsound} />
 
-      {/* --- TOMBOL MUSIK FLOATING --- */}
+      {/* Background Floral */}
       {isOpen && (
-        <button
-          onClick={toggleMusic}
-          className="fixed bottom-6 right-6 z-50 p-4 bg-white/70 backdrop-blur-md rounded-full shadow-xl text-stone-700 hover:scale-110 transition-all flex items-center justify-center w-12 h-12 md:w-14 md:h-14"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.5 }}
+          className="fixed inset-0 z-0"
+          style={{
+            backgroundImage: `url(${assets.bgFloral})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundAttachment: "fixed",
+          }}
         >
-          {/* Animasi spin hanya saat lagu berputar */}
-          <div className={`${isPlaying ? "animate-spin-slow" : ""}`}>
-            {isPlaying ? (
-              <FaMusic className="text-red-400" />
-            ) : (
-              <FaPlay className="ml-1" />
-            )}
-          </div>
-        </button>
+          <div className="absolute inset-0 bg-white/10"></div>
+        </motion.div>
       )}
 
-      {/* --- COVER / OPENING --- */}
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {showQRCode && (
+          <QRCodeModal
+            guestName={guestName}
+            onClose={() => setShowQRCode(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Cover Section */}
       <AnimatePresence>
         {!isOpen && (
           <motion.section
             exit={{ y: "-100%", opacity: 0 }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-stone-900 text-white text-center px-4"
-            style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${backgroundUndangan})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="fixed inset-0 z-[100] flex flex-col md:flex-row bg-gradient-to-br from-pink-400 via-pink-300 to-pink-200 overflow-hidden"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1 }}
-            >
-              <h2 className="text-sm uppercase tracking-[0.5em] mb-4">
-                The Wedding Of
-              </h2>
-              <h1 className="text-6xl md:text-8xl font-cursive mb-6">
-                Nama Mempelai Pria & Wanita{" "}
-              </h1>
-              <p className="mb-10 text-stone-300 tracking-widest text-lg">
-                Tanggal Pernikahan
-              </p>
-              <button
-                onClick={openInvitation}
-                className="px-8 py-3 bg-white text-stone-900 rounded-full font-bold shadow-2xl hover:bg-stone-200 transition-all flex items-center gap-2 mx-auto"
+            <div className="absolute inset-0 md:relative md:w-7/12 h-full">
+              <img
+                src={assets.bgCover}
+                className="w-full h-full object-cover opacity-60 md:opacity-100"
+                alt="Cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-pink-600/50 via-transparent to-transparent"></div>
+            </div>
+            <CoverParticleEffect />
+            <div className="relative w-full md:w-5/12 h-full flex flex-col items-center justify-center p-8 text-center z-10">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.8 }}
               >
-                <FaHeart className="text-red-500 animate-pulse" /> Buka Undangan
-              </button>
-            </motion.div>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="tracking-[0.5em] text-[10px] mb-4 text-red-600 uppercase font-bold"
+                >
+                  Wedding Invitation
+                </motion.p>
+                <motion.h1
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{
+                    delay: 0.6,
+                    type: "spring",
+                    stiffness: 150,
+                    damping: 15,
+                  }}
+                  className="text-6xl md:text-7xl font-cursive mb-6 text-black"
+                >
+                  Dicky & Kakak
+                </motion.h1>
+                <div className="mb-8">
+                  <p className="text-xs opacity-60 mb-2 text-black">
+                    Kepada Yth. Bapak/Ibu/Saudara/i
+                  </p>
+                  <motion.h2
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8, duration: 0.6 }}
+                    className="text-2xl font-bold italic text-red-600"
+                  >
+                    {guestName}
+                  </motion.h2>
+                </div>
+                <motion.button
+                  onClick={handleOpen}
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.8 }}
+                  className="bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-2xl flex items-center gap-2 mx-auto uppercase text-xs tracking-widest hover:bg-red-700 transition-colors"
+                >
+                  <FaHeart className="text-white" /> Buka Undangan
+                </motion.button>
+              </motion.div>
+            </div>
           </motion.section>
         )}
       </AnimatePresence>
 
-      {/* --- ISI UNDANGAN --- */}
+      {/* Main Content */}
       {isOpen && (
-        <motion.main
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          {/* Section Nama Mempelai */}
+        <main className="relative z-20 pt-16 pb-20 px-4 space-y-12">
+          {/* Section 1: PENYAMBUTAN */}
           <section
-            className="relative pt-12 pb-24 px-4 overflow-hidden bg-cover bg-center bg-fixed min-h-screen flex items-center"
-            style={{ backgroundImage: `url(${backgroundUndangan})` }}
+            ref={profilRef}
+            data-section="profil"
+            className="max-w-4xl mx-auto scroll-mt-20"
           >
-            {/* Overlay dibuat sangat tipis (20%) agar background tetap dominan */}
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
-
-            <div className="relative z-10 max-w-5xl mx-auto text-center w-full">
+            <GlassCard className="text-center !pt-16">
               <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1 }}
-                // Perubahan: mb-16 jadi mb-8 agar jarak ke foto mempelai lebih rapat
-                className="mb-8"
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ type: "spring", stiffness: 150, damping: 20 }}
               >
-                {/* Teks Salam */}
-                <h2 className="text-3xl md:text-4xl font-cursive text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] mb-4">
-                  Assalamu’alaikum Wr. Wb.
-                </h2>
-                <p className="text-white font-medium italic px-6 leading-relaxed max-w-2xl mx-auto drop-shadow-md text-base md:text-lg">
-                  "Maha suci Allah yang telah menciptakan mahluk-Nya
-                  berpasang-pasangan. Dengan penuh sukacita, kami mengundang
-                  Bapak/Ibu/Saudara/i untuk menjadi bagian dari hari istimewa
-                  kami."
-                </p>
+                <FaHeart className="mx-auto text-3xl text-[#c81919] mb-6 animate-pulse" />
               </motion.div>
-
-              <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-16">
-                {/* Bagian Mempelai Pria */}
-                <div className="flex-1 space-y-4">
-                  {/* Ukuran foto sedikit diperkecil agar tidak makan tempat (w-36 h-36) */}
-                  <div className="w-36 h-36 md:w-44 md:h-44 mx-auto rounded-full border-4 border-white shadow-2xl overflow-hidden ring-4 ring-white/20">
-                    <img
-                      src={fotoLaki}
-                      className="w-full h-full object-cover"
-                      alt="Mempelai Pria"
-                    />
-                  </div>
-
-                  <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-xl">
-                    <h3 className="text-xl md:text-2xl font-cursive text-white font-bold drop-shadow-lg mb-2">
-                      Nama Lengkap Suami Disini
-                    </h3>
-                    <div className="text-[10px] md:text-xs text-stone-100 uppercase tracking-widest flex flex-col gap-0">
-                      <span className="opacity-80">Putra dari:</span>
-                      <span className="font-bold text-white">
-                        Bpk. Nama Ayah & Ibu Nama Ibu
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Ikon Pemisah Tengah - Dikecilkan ukurannya */}
-                <motion.div
-                  className="w-16 h-16 md:w-24 md:h-24 flex items-center justify-center my-[-10px] md:my-0"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
+              <motion.p
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="text-sm tracking-[0.4em] uppercase mb-8 font-bold text-black opacity-80"
+              >
+                Undangan Pernikahan
+              </motion.p>
+              <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-12 mb-12">
+                <motion.h1
+                  initial={{ opacity: 0, x: -50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3, duration: 0.7 }}
+                  className="text-6xl md:text-7xl font-cursive text-black"
                 >
-                  <img
-                    src={ikatan}
-                    className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
-                    alt="Pemisah"
-                  />
+                  Dicky
+                </motion.h1>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4, type: "spring", stiffness: 150 }}
+                  className="text-5xl font-cursive text-black opacity-30 my-2"
+                >
+                  &
                 </motion.div>
-
-                {/* Bagian Mempelai Wanita */}
-                <div className="flex-1 space-y-4">
-                  <div className="w-36 h-36 md:w-44 md:h-44 mx-auto rounded-full border-4 border-white shadow-2xl overflow-hidden ring-4 ring-white/20">
-                    <img
-                      src={fotoPerempuan}
-                      className="w-full h-full object-cover"
-                      alt="Mempelai Wanita"
-                    />
-                  </div>
-
-                  <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-xl">
-                    <h3 className="text-xl md:text-2xl font-cursive text-white font-bold drop-shadow-lg mb-2">
-                      Nama Lengkap Istri Disini
-                    </h3>
-                    <div className="text-[10px] md:text-xs text-stone-100 uppercase tracking-widest flex flex-col gap-0">
-                      <span className="opacity-80">Putri dari:</span>
-                      <span className="font-bold text-white">
-                        Bpk. Nama Ayah & Ibu Nama Ibu
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <motion.h1
+                  initial={{ opacity: 0, x: 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5, duration: 0.7 }}
+                  className="text-6xl md:text-7xl font-cursive text-black"
+                >
+                  Kakak
+                </motion.h1>
               </div>
-            </div>
-          </section>
-
-          {/* Section Countdown */}
-          <section className="relative bg-stone-900 text-white py-24 text-center px-4 overflow-hidden shadow-inner">
-            {/* --- FOTO DEKORASI ANIMASI --- */}
-
-            {/* Foto 1: Kiri Atas */}
-            <motion.img
-              src={lari}
-              alt="lari"
-              className="absolute -top-10 -left-10 w-40 h-40 md:w-64 md:h-64 object-contain opacity-40 z-0"
-              animate={{
-                rotate: [0, 10, 0],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            />
-
-            {/* Foto 2: Kanan Bawah */}
-            <motion.img
-              src={gendong}
-              alt="gendong"
-              className="absolute -bottom-10 -right-10 w-40 h-40 md:w-64 md:h-64 object-contain opacity-40 z-0"
-              animate={{
-                y: [0, -20, 0],
-                rotate: [0, -10, 0],
-              }}
-              transition={{
-                duration: 7,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1,
-              }}
-            />
-
-            {/* --- ISI KONTEN --- */}
-            <div className="relative z-10 max-w-4xl mx-auto">
-              <motion.h3
+              <div className="border-t border-b border-stone-400/50 py-8 my-8">
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                  className="text-sm tracking-[0.2em] mb-2 font-bold uppercase text-black"
+                >
+                  Senin, 17 Agustus 2026
+                </motion.p>
+                <Countdown targetDate="2026-08-17T08:00:00" />
+              </div>
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                className="text-3xl md:text-5xl font-cursive mb-12 text-stone-200 italic drop-shadow-lg"
+                viewport={{ once: true }}
+                transition={{ delay: 0.7, duration: 0.6 }}
+                className="text-black italic"
               >
-                Menuju Hari Bahagia
-              </motion.h3>
-
-              <div className="flex justify-center gap-3 md:gap-8">
-                {Object.entries(timeLeft).map(([unit, value]) => (
-                  <motion.div
-                    key={unit}
-                    className="flex flex-col items-center"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    {/* Box Countdown dengan Glassmorphism yang lebih gelap */}
-                    <div className="text-3xl md:text-5xl font-bold bg-white/5 w-20 h-24 md:w-28 md:h-32 flex items-center justify-center rounded-2xl backdrop-blur-md border border-white/10 shadow-2xl">
-                      {value || 0}
-                    </div>
-                    <span className="mt-4 text-[10px] md:text-xs uppercase tracking-[0.3em] text-stone-400 font-semibold">
-                      {unit}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+                <p className="text-xs uppercase tracking-widest mb-1 font-bold opacity-60">
+                  Spesial untuk:
+                </p>
+                <p className="text-2xl font-bold not-italic text-black">
+                  {guestName}
+                </p>
+              </motion.div>
+            </GlassCard>
           </section>
 
-          {/* Section Acara */}
-          <section className="relative py-32 px-4 overflow-hidden min-h-[700px] flex items-center justify-center">
-            {/* --- ANIMASI BACKGROUND FULL --- */}
-            <div className="absolute inset-0 z-0 pointer-events-none">
-              <motion.img
-                src={akadNikah}
-                alt="background-animasi"
-                className="w-full h-full object-cover opacity-10"
-                animate={{
-                  y: [-30, 30, -30],
-                }}
-                transition={{
-                  duration: 12,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-              />
-            </div>
+          {/* Section 2: AR-RUM */}
+          <section className="max-w-4xl mx-auto">
+            <GlassCard className="text-center space-y-6">
+              <motion.p
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="text-2xl md:text-3xl font-serif leading-relaxed text-black font-semibold"
+                dir="rtl"
+              >
+                وَمِنْ اٰيٰتِهٖٓ اَنْ خَلَقَ لَكُمْ مِّنْ اَنْفُسِكُمْ
+                اَزْوَاجًا لِّتَسْكُنُوْٓا اِلَيْهَا وَجَعَلَ بَيْنَكُمْ
+                مَّوَدَّةً وَّرَحْمَةً ۗ اِنَّ فِيْ ذٰلِكَ لَاٰيٰتٍ لِّقَوْمٍ
+                يَّتَفَكَّرُوْنَ
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="text-sm italic text-stone-900 leading-relaxed px-4 font-medium"
+              >
+                "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan
+                pasangan-pasangan untukmu dari jenismu sendiri..."
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+                className="text-xs font-bold tracking-widest text-black uppercase opacity-60"
+              >
+                — QS. Ar-Rum: 21 —
+              </motion.p>
+            </GlassCard>
+          </section>
 
-            <div className="relative z-10 max-w-4xl mx-auto w-full">
-              {/* Grid dengan gap lebih besar agar background lebih terekspos */}
-              <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center justify-items-center">
-                {/* Kartu Akad Nikah */}
+          {/* Section 3: PROFIL */}
+          <section className="max-w-4xl mx-auto">
+            <GlassCard className="text-center space-y-12">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7 }}
+                className="text-4xl font-cursive text-black"
+              >
+                Assalamu’alaikum Wr. Wb.
+              </motion.h2>
+              <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
                 <motion.div
-                  initial={{ x: -50, opacity: 0 }}
-                  whileInView={{ x: 0, opacity: 1 }}
+                  initial={{ opacity: 0, x: -50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.8 }}
-                  /* ANIMASI HOVER: Membesar, Mengangkat, & Shadow lebih tajam */
-                  whileHover={{
-                    scale: 1.05,
-                    y: -15,
-                    shadow: "0px 20px 40px rgba(0,0,0,0.2)",
-                  }}
-                  className="w-full max-w-[320px] p-8 bg-white/70 backdrop-blur-md rounded-3xl shadow-xl text-center border-b-4 border-stone-200 cursor-pointer transition-shadow duration-300"
+                  transition={{ type: "spring", stiffness: 150, delay: 0.1 }}
+                  className="text-center"
                 >
-                  <div className="mb-4 inline-block p-3 bg-stone-50 rounded-full mx-auto">
-                    <FaCalendarAlt className="text-2xl text-stone-400" />
-                  </div>
-                  <h4 className="text-xl font-bold tracking-[0.2em] mb-3 uppercase text-stone-800">
+                  <motion.img
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    src={assets.fotoPria}
+                    className="w-36 h-36 rounded-full border-4 border-white shadow-2xl mx-auto mb-6 object-cover"
+                  />
+                  <h3 className="text-4xl font-cursive text-black">
+                    Dicky Assidiq
+                  </h3>
+                  <p className="text-xs mt-3 font-bold text-black uppercase tracking-widest">
+                    Putra dari:
+                  </p>
+                  <p className="text-sm font-medium text-stone-900">
+                    Bpk. Indra & Ibu Nur
+                  </p>
+                </motion.div>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 150 }}
+                  className="text-5xl font-cursive text-black opacity-30"
+                >
+                  &
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ type: "spring", stiffness: 150, delay: 0.3 }}
+                  className="text-center"
+                >
+                  <motion.img
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    src={assets.fotoWanita}
+                    className="w-36 h-36 rounded-full border-4 border-white shadow-2xl mx-auto mb-6 object-cover"
+                  />
+                  <h3 className="text-4xl font-cursive text-black">Kakak</h3>
+                  <p className="text-xs mt-3 font-bold text-black uppercase tracking-widest">
+                    Putri dari:
+                  </p>
+                  <p className="text-sm font-medium text-stone-900">
+                    Bpk. Yusuf & Ibu Maria
+                  </p>
+                </motion.div>
+              </div>
+            </GlassCard>
+          </section>
+
+          {/* Section 4: ACARA */}
+          <section
+            ref={acaraRef}
+            data-section="acara"
+            className="max-w-4xl mx-auto scroll-mt-20"
+          >
+            <GlassCard className="text-center space-y-10">
+              <div className="space-y-4">
+                <motion.div
+                  initial={{ rotate: -180, opacity: 0 }}
+                  whileInView={{ rotate: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ type: "spring", stiffness: 120, damping: 15 }}
+                >
+                  <FaCalendarAlt className="mx-auto text-3xl text-black opacity-60 mb-2" />
+                </motion.div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6 }}
+                  className="text-4xl font-cursive text-black"
+                >
+                  Rangkaian Acara
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="text-sm font-bold tracking-[0.2em] text-stone-600 uppercase"
+                >
+                  Senin, 17 Agustus 2026
+                </motion.p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <motion.div
+                  initial={{ opacity: 0, x: -30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="bg-white/40 border border-white/60 p-6 rounded-[30px] shadow-sm"
+                >
+                  <h4 className="text-2xl font-cursive text-black mb-4">
                     Akad Nikah
                   </h4>
-                  <div className="space-y-1 text-stone-600 text-sm md:text-base">
-                    <p className="font-medium text-stone-500">Tanggal Acara</p>
-                    <p className="font-bold text-xl text-stone-800 my-3">
-                      Jam Acara
-                    </p>
-                    <div className="h-[1px] w-12 bg-stone-200 mx-auto my-3"></div>
-                    <p className="text-stone-400 italic text-sm">
-                      Tempat Acara
+                  <div className="space-y-1 text-sm text-stone-800">
+                    <p className="font-bold">08:00 - 10:00 WIB</p>
+                    <p>Gedung Graha Medika</p>
+                    <p className="opacity-70">
+                      Jl. Raya Gresik No. 123, Jawa Timur
                     </p>
                   </div>
                 </motion.div>
 
-                {/* Kartu Resepsi */}
                 <motion.div
-                  initial={{ x: 50, opacity: 0 }}
-                  whileInView={{ x: 0, opacity: 1 }}
+                  initial={{ opacity: 0, x: 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  /* ANIMASI HOVER: Membesar & Efek cahaya pada card gelap */
-                  whileHover={{
-                    scale: 1.05,
-                    y: -15,
-                    boxShadow: "0px 15px 35px rgba(0,0,0,0.5)",
-                  }}
-                  className="w-full max-w-[320px] p-8 bg-stone-900/80 backdrop-blur-md text-white rounded-3xl shadow-xl text-center cursor-pointer transition-shadow duration-300 border border-white/10"
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="bg-white/40 border border-white/60 p-6 rounded-[30px] shadow-sm"
                 >
-                  <div className="mb-4 inline-block p-3 bg-white/10 rounded-full mx-auto">
-                    <FaMapMarkerAlt className="text-2xl text-stone-400" />
-                  </div>
-                  <h4 className="text-xl font-bold tracking-[0.2em] mb-3 uppercase text-stone-200">
+                  <h4 className="text-2xl font-cursive text-black mb-4">
                     Resepsi
                   </h4>
-                  <div className="space-y-1 text-sm md:text-base">
-                    <p className="font-medium text-stone-400">Tanggal Acara</p>
-                    <p className="font-bold text-xl text-white my-3">
-                      Jam Acara
-                    </p>
-                    <div className="h-[1px] w-12 bg-white/20 mx-auto my-3"></div>
-                    <p className="text-stone-400 italic text-sm">
-                      Tempat Acara
+                  <div className="space-y-1 text-sm text-stone-800">
+                    <p className="font-bold">11:00 WIB - Selesai</p>
+                    <p>Gedung Graha Medika</p>
+                    <p className="opacity-70">
+                      Jl. Raya Gresik No. 123, Jawa Timur
                     </p>
                   </div>
                 </motion.div>
               </div>
-            </div>
+
+              <PulsingButton
+                onClick={() => window.open("https://maps.google.com", "_blank")}
+                className="bg-black text-white px-10 py-3 rounded-full font-bold shadow-xl flex items-center gap-3 mx-auto uppercase text-xs tracking-widest hover:bg-stone-800 transition-colors"
+                icon={FaMapMarkerAlt}
+              >
+                Lihat Lokasi
+              </PulsingButton>
+            </GlassCard>
           </section>
 
-          {/* Footer RSVP */}
-          <footer className="w-full bg-stone-100">
-            {/* Perubahan: MD:aspectRatio agar mobile fleksibel, min-h-screen di mobile supaya lega */}
-            <div
-              className="relative w-full overflow-hidden flex items-center justify-center py-20 md:py-0"
-              style={{
-                aspectRatio: window.innerWidth > 768 ? "827 / 687" : "auto",
-                minHeight: "100 flex",
-              }}
-            >
-              {/* Foto Background */}
-              <div
-                className="absolute inset-0 z-0"
-                style={{
-                  backgroundImage: `url(${date})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  backgroundRepeat: "no-repeat",
-                }}
-              >
-                {/* Overlay tambahan agar teks lebih terbaca di mobile jika foto terlalu ramai */}
-                <div className="absolute inset-0 bg-black/10 md:bg-transparent"></div>
-              </div>
-
-              {/* Konten Teks */}
-              <div className="relative z-10 flex flex-col items-center justify-center px-6 text-center w-full">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 1 }}
-                  // Perubahan: Lebar disesuaikan (w-full max-w-sm) agar tidak mentok pinggir layar hp
-                  className="bg-white/20 backdrop-blur-lg p-8 md:p-12 rounded-[40px] border border-white/30 shadow-2xl w-full max-w-[90%] md:max-w-lg"
+          {/* Section 5: GALERI & LIVE STREAMING */}
+          <section
+            ref={galeriRef}
+            data-section="galeri"
+            className="max-w-4xl mx-auto scroll-mt-20"
+          >
+            <GlassCard className="text-center space-y-10">
+              <div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6 }}
+                  className="text-4xl font-cursive text-black mb-2"
                 >
-                  <h2 className="text-4xl md:text-6xl font-cursive text-white font-bold drop-shadow-lg mb-6">
-                    Terima Kasih
-                  </h2>
-
-                  <p className="text-white font-medium italic mb-8 text-base md:text-lg leading-relaxed drop-shadow-md">
-                    "Kehadiran dan doa restu Bapak/Ibu/Saudara/i merupakan
-                    kebahagiaan bagi kami."
-                  </p>
-
-                  <a
-                    href="https://wa.me/6289636758016?text=Halo Nama mempelai, saya akan datang ke pernikahan kalian!"
-                    className="inline-flex items-center gap-3 bg-white text-stone-900 px-8 py-4 rounded-full font-bold hover:bg-stone-100 transition-all shadow-xl active:scale-95 text-sm md:text-base"
-                  >
-                    <FaWhatsapp className="text-xl text-green-600" />
-                    Konfirmasi Kehadiran
-                  </a>
-
-                  <div className="mt-12 text-[10px] text-white/80 uppercase tracking-[0.4em] font-bold">
-                    Created with ❤️ by Dicky
-                  </div>
-                </motion.div>
+                  Galeri Bahagia
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="text-xs tracking-widest text-stone-600 uppercase font-bold"
+                >
+                  Momen Indah Kami
+                </motion.p>
               </div>
-            </div>
+
+              <div className="relative w-full overflow-hidden">
+                <div
+                  id="gallery-slider"
+                  className="flex overflow-x-auto gap-4 px-10 scroll-smooth py-2 no-scrollbar"
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                >
+                  <style>{`
+                    #gallery-slider::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}</style>
+
+                  {galleryImages.map((img, index) => (
+                    <motion.img
+                      key={index}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      src={img}
+                      onClick={() => setSelectedPhoto(index)}
+                      className={`w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl cursor-pointer transition-all duration-300 flex-shrink-0 border-2 ${
+                        selectedPhoto === index
+                          ? "border-black scale-105 shadow-md"
+                          : "border-transparent opacity-50 hover:opacity-100"
+                      }`}
+                      alt={`Thumb ${index}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative group aspect-[4/5] md:aspect-video rounded-[30px] overflow-hidden border-8 border-white shadow-2xl">
+                <motion.img
+                  key={selectedPhoto}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6 }}
+                  src={galleryImages[selectedPhoto]}
+                  className="w-full h-full object-cover"
+                  alt="Foto Utama"
+                />
+
+                <button
+                  onClick={() => {
+                    const newIndex =
+                      selectedPhoto > 0
+                        ? selectedPhoto - 1
+                        : galleryImages.length - 1;
+                    setSelectedPhoto(newIndex);
+                    document
+                      .getElementById("gallery-slider")
+                      .scrollBy({ left: -100, behavior: "smooth" });
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 p-3 rounded-full text-black hover:bg-black hover:text-white transition-all z-10 opacity-0 group-hover:opacity-100 hidden md:flex"
+                >
+                  <FaChevronLeft size={18} />
+                </button>
+
+                <button
+                  onClick={() => {
+                    const newIndex =
+                      selectedPhoto < galleryImages.length - 1
+                        ? selectedPhoto + 1
+                        : 0;
+                    setSelectedPhoto(newIndex);
+                    document
+                      .getElementById("gallery-slider")
+                      .scrollBy({ left: 100, behavior: "smooth" });
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-3 rounded-full text-black hover:bg-black hover:text-white transition-all z-10 opacity-0 group-hover:opacity-100 hidden md:flex"
+                >
+                  <FaChevronRight size={18} />
+                </button>
+
+                <div className="md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2">
+                  <button
+                    onClick={() => {
+                      const newIndex =
+                        selectedPhoto > 0
+                          ? selectedPhoto - 1
+                          : galleryImages.length - 1;
+                      setSelectedPhoto(newIndex);
+                      document
+                        .getElementById("gallery-slider")
+                        .scrollBy({ left: -80, behavior: "smooth" });
+                    }}
+                    className="bg-white/60 p-2 rounded-full backdrop-blur-sm"
+                  >
+                    <FaChevronLeft size={14} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newIndex =
+                        selectedPhoto < galleryImages.length - 1
+                          ? selectedPhoto + 1
+                          : 0;
+                      setSelectedPhoto(newIndex);
+                      document
+                        .getElementById("gallery-slider")
+                        .scrollBy({ left: 80, behavior: "smooth" });
+                    }}
+                    className="bg-white/60 p-2 rounded-full backdrop-blur-sm"
+                  >
+                    <FaChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+
+              <hr className="border-stone-300" />
+
+              <div className="space-y-6">
+                <motion.div
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ repeat: Infinity, duration: 2.5 }}
+                  className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase"
+                >
+                  Live Streaming
+                </motion.div>
+                <h3 className="text-2xl font-cursive text-black">
+                  Saksikan Momen Suci Kami
+                </h3>
+                <div className="aspect-video rounded-[30px] overflow-hidden shadow-2xl border-4 border-white bg-black">
+                  <iframe
+                    className="w-full h-full"
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                    frameBorder="0"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              </div>
+            </GlassCard>
+          </section>
+
+          {/* Section 6: RSVP & DIGITAL GIFT */}
+          <section
+            ref={rsvpRef}
+            data-section="rsvp"
+            className="max-w-4xl mx-auto scroll-mt-20"
+          >
+            <GlassCard className="text-center space-y-12">
+              <div className="space-y-6">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ type: "spring", stiffness: 150 }}
+                  className="inline-flex items-center gap-2 bg-stone-100 text-stone-600 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest"
+                >
+                  Reservation
+                </motion.div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6 }}
+                  className="text-4xl font-cursive text-black"
+                >
+                  Konfirmasi Kehadiran
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="text-sm text-stone-600 max-w-md mx-auto"
+                >
+                  Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila
+                  Bapak/Ibu/Saudara/i berkenan hadir untuk memberikan doa restu.
+                </motion.p>
+                <PulsingButton
+                  onClick={() =>
+                    window.open(
+                      `https://wa.me/6289636758016?text=Halo%20Dicky,%20Saya%20ingin%20konfirmasi%20kehadiran%20di%20acara%20pernikahan%20anda.%0A%0ANama:%20%0AJumlah%20Hadir:%20`,
+                      "_blank"
+                    )
+                  }
+                  className="inline-flex items-center gap-2 bg-[#25D366] text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-all"
+                  icon={FaWhatsapp}
+                >
+                  Konfirmasi via WhatsApp
+                </PulsingButton>
+              </div>
+
+              <hr className="border-stone-200 w-1/2 mx-auto" />
+
+              <div className="space-y-8">
+                <div>
+                  <motion.h2
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="text-4xl font-cursive text-black mb-2"
+                  >
+                    Kado Digital
+                  </motion.h2>
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2, duration: 0.6 }}
+                    className="text-xs tracking-widest text-stone-500 uppercase font-bold"
+                  >
+                    Love Gift
+                  </motion.p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                    whileHover={{ y: -5 }}
+                    className="bg-white/50 p-6 rounded-[25px] border border-stone-200 shadow-sm space-y-4"
+                  >
+                    <div className="h-8 flex items-center justify-center italic font-serif font-black text-blue-700 text-2xl">
+                      DANA
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-stone-500 uppercase font-bold tracking-tighter">
+                        Nomor Dana
+                      </p>
+                      <p className="text-xl font-mono font-bold text-blue-600">
+                        089636758016
+                      </p>
+                      <p className="text-sm font-medium text-stone-700">
+                        a.n Dicky
+                      </p>
+                    </div>
+                    <div className="bg-white p-2 inline-block rounded-xl border border-stone-100 shadow-inner">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=089636758016`}
+                        alt="QR Dana"
+                        className="w-32 h-32"
+                      />
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: 30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
+                    whileHover={{ y: -5 }}
+                    className="bg-white/50 p-6 rounded-[25px] border border-stone-200 shadow-sm space-y-4"
+                  >
+                    <div className="h-8 flex items-center justify-center italic font-serif font-black text-emerald-700 text-2xl">
+                      BSI
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-stone-500 uppercase font-bold tracking-tighter">
+                        Nomor Rekening
+                      </p>
+                      <p className="text-xl font-mono font-bold text-emerald-700 underline decoration-dotted">
+                        7123456789
+                      </p>
+                      <p className="text-sm font-medium text-stone-700">
+                        a.n Dicky
+                      </p>
+                    </div>
+                    <div className="bg-white p-2 inline-block rounded-xl border border-stone-100 shadow-inner">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=7123456789`}
+                        alt="QR BSI"
+                        className="w-32 h-32"
+                      />
+                    </div>
+                  </motion.div>
+                </div>
+
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                  className="text-[10px] text-black font-medium italic"
+                >
+                  *Terima kasih atas doa restu dan tanda kasih
+                  Bapak/Ibu/Saudara/i sekalian.
+                </motion.p>
+              </div>
+            </GlassCard>
+          </section>
+
+          {/* Section 7: UCAPAN & DOA */}
+          <section
+            ref={ucapanRef}
+            data-section="ucapan"
+            className="max-w-4xl mx-auto scroll-mt-20"
+          >
+            <GlassCard className="space-y-10">
+              <div className="text-center">
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6 }}
+                  className="text-4xl font-cursive text-black mb-2"
+                >
+                  Ucapan & Doa
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="text-xs tracking-widest text-stone-500 uppercase font-bold"
+                >
+                  Berikan Doa Restu Anda
+                </motion.p>
+              </div>
+
+              <form onSubmit={handleSendWish} className="space-y-4">
+                <motion.input
+                  initial={{ opacity: 0, x: -30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                  type="text"
+                  placeholder="Nama Anda"
+                  value={wishName}
+                  onChange={(e) => setWishName(e.target.value)}
+                  className="w-full px-5 py-3 rounded-2xl bg-white/50 border border-stone-200 focus:outline-none focus:border-stone-400 text-sm"
+                  required
+                />
+                <motion.textarea
+                  initial={{ opacity: 0, x: 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  placeholder="Berikan ucapan dan doa restu..."
+                  value={wishMessage}
+                  onChange={(e) => setWishMessage(e.target.value)}
+                  className="w-full px-5 py-3 rounded-2xl bg-white/50 border border-stone-200 focus:outline-none focus:border-stone-400 text-sm h-32"
+                  required
+                ></motion.textarea>
+                <PulsingButton
+                  type="submit"
+                  className="w-full bg-black text-white py-3 rounded-full font-bold shadow-lg hover:bg-stone-800 transition-all text-xs uppercase tracking-widest"
+                >
+                  Kirim Ucapan
+                </PulsingButton>
+              </form>
+
+              <div className="max-h-[280px] overflow-y-auto pr-2 space-y-4 no-scrollbar scroll-smooth">
+                <style>{`
+                  .no-scrollbar::-webkit-scrollbar { display: none; }
+                `}</style>
+
+                {allWishes.length === 0 ? (
+                  <p className="text-center text-stone-400 italic text-sm">
+                    Belum ada ucapan...
+                  </p>
+                ) : (
+                  allWishes.map((wish, index) => (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1, duration: 0.5 }}
+                      key={index}
+                      className="p-5 rounded-2xl bg-white/60 border border-white shadow-sm text-left relative group"
+                    >
+                      <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-2 gap-1 pr-8">
+                        <div>
+                          <h4 className="font-bold text-black text-sm">
+                            {wish.name}
+                          </h4>
+                          <span className="text-[9px] text-stone-400 uppercase tracking-tighter">
+                            {wish.time}
+                          </span>
+                        </div>
+
+                        <button
+                          onClick={() => handleDeleteWish(index)}
+                          className="absolute top-4 right-4 text-stone-300 hover:text-red-500 transition-colors p-2"
+                          title="Hapus ucapan"
+                        >
+                          <FaTrash size={12} />
+                        </button>
+                      </div>
+
+                      <p className="text-sm text-stone-700 italic leading-relaxed">
+                        "{wish.message}"
+                      </p>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </GlassCard>
+          </section>
+
+          {/* Section 8: UCAPAN TERIMA KASIH */}
+          <section className="max-w-4xl mx-auto px-4">
+            <GlassCard className="p-0 overflow-hidden rounded-[40px] shadow-2xl border border-white/60 bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-2 items-stretch">
+                <div className="relative h-64 md:h-auto min-h-[350px]">
+                  <motion.img
+                    initial={{ scale: 1.2 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1.2 }}
+                    src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=800&auto=format&fit=cover"
+                    alt="Mempelai"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 md:to-transparent"></div>
+                </div>
+
+                <div className="bg-white p-10 md:p-16 text-center space-y-6 flex flex-col items-center justify-center">
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ repeat: Infinity, duration: 3 }}
+                  >
+                    <FaHeart className="text-3xl text-[#c81919] mb-2" />
+                  </motion.div>
+
+                  <div className="space-y-2">
+                    <motion.p
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6 }}
+                      className="text-[10px] uppercase tracking-[0.5em] font-bold text-stone-400"
+                    >
+                      Final Greeting
+                    </motion.p>
+                    <motion.h2
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.2, duration: 0.6 }}
+                      className="text-5xl font-cursive text-black italic"
+                    >
+                      Terima Kasih
+                    </motion.h2>
+                  </div>
+
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                    className="text-sm text-stone-700 leading-relaxed font-medium max-w-sm"
+                  >
+                    Atas kehadiran, doa restu, dan tanda kasih dari
+                    Bapak/Ibu/Saudara/i sekalian, kami sekeluarga mengucapkan
+                    terima kasih yang tak terhingga.
+                  </motion.p>
+
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    whileInView={{ scaleX: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
+                    className="w-16 h-[1px] bg-stone-200"
+                  ></motion.div>
+
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                    className="text-xs text-stone-500 italic px-4"
+                  >
+                    "Semoga Allah memberkahi kalian dan melimpahkan berkah atas
+                    kalian serta menghimpun kalian berdua dalam kebaikan."
+                  </motion.p>
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.6, duration: 0.6 }}
+                    className="pt-8"
+                  >
+                    <p className="text-3xl font-cursive text-black">
+                      Dicky & Kakak
+                    </p>
+                  </motion.div>
+                </div>
+              </div>
+            </GlassCard>
+          </section>
+
+          <footer className="text-center py-6">
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="text-[10px] tracking-[0.5em] uppercase text-black font-bold opacity-40"
+            >
+              Handcrafted by Dickyasyy
+            </motion.p>
           </footer>
-        </motion.main>
+        </main>
+      )}
+
+      {/* Season Navigation */}
+      {isOpen && (
+        <SeasonNav
+          activeSeason={activeSeason}
+          setActiveSeason={setActiveSeason}
+          scrollToSection={scrollToSection}
+        />
+      )}
+
+      {/* Musik Toggle & QR Code Button */}
+      {isOpen && (
+        <div className="fixed bottom-20 right-4 z-50 flex flex-col items-end gap-2">
+          {/* QR Code Button */}
+          <motion.button
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            onClick={() => setShowQRCode(true)}
+            className="w-10 h-10 bg-white/20 backdrop-blur-md shadow-2xl rounded-full flex items-center justify-center text-[#D4AF37] border border-white/40 hover:bg-white/30 transition-all"
+          >
+            <FaQrcode size={16} />
+          </motion.button>
+
+          {/* Tombol Musik */}
+          <button
+            onClick={() => {
+              setIsPlaying(!isPlaying);
+              isPlaying ? audioRef.current.pause() : audioRef.current.play();
+            }}
+            className="w-12 h-12 bg-white/20 backdrop-blur-md shadow-2xl rounded-full flex items-center justify-center text-[#D4AF37] border border-white/40 hover:bg-white/30 transition-all"
+          >
+            <FaMusic className={isPlaying ? "animate-spin-slow" : ""} />
+          </button>
+        </div>
       )}
     </div>
   );
