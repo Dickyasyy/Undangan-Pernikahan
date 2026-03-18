@@ -159,6 +159,25 @@ const PulsingButton = ({ children, onClick, className = "", icon: Icon }) => {
 
 // Particle Effect Component untuk Cover
 const CoverParticleEffect = () => {
+  const [dimensions, setDimensions] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 1000,
+    height: typeof window !== "undefined" ? window.innerHeight : 1000,
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const handleResize = () => {
+        setDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+      };
+
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
+
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
       {[...Array(30)].map((_, i) => (
@@ -166,13 +185,13 @@ const CoverParticleEffect = () => {
           key={i}
           className="absolute text-pink-300/30"
           initial={{
-            x: Math.random() * window.innerWidth,
+            x: Math.random() * dimensions.width,
             y: -20,
             rotate: 0,
             scale: 0.5 + Math.random() * 0.8,
           }}
           animate={{
-            y: window.innerHeight + 100,
+            y: dimensions.height + 100,
             x: `calc(${Math.random() * 100}vw + ${Math.random() * 100}px)`,
             rotate: 360,
           }}
@@ -434,13 +453,19 @@ const App = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 1.5 }}
           className="fixed inset-0 z-0"
-          style={{
-            backgroundImage: `url(${assets.bgFloral})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundAttachment: "fixed",
-          }}
         >
+          {/* Background dengan pseudo-element */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${assets.bgFloral})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundAttachment: "scroll",
+              transform: "translate3d(0,0,0)", 
+              WebkitTransform: "translate3d(0,0,0)", 
+            }}
+          />
           <div className="absolute inset-0 bg-white/10"></div>
         </motion.div>
       )}
@@ -461,7 +486,7 @@ const App = () => {
           <motion.section
             exit={{ y: "-100%", opacity: 0 }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="fixed inset-0 z-[100] flex flex-col md:flex-row bg-gradient-to-br from-pink-400 via-pink-300 to-pink-200 overflow-hidden"
+            className="fixed inset-0 z-[100] flex flex-col md:flex-row bg-gradient-to-br from-pink-200 via-pink-100 to-white overflow-hidden"
           >
             <div className="absolute inset-0 md:relative md:w-7/12 h-full">
               <img
@@ -469,7 +494,7 @@ const App = () => {
                 className="w-full h-full object-cover opacity-60 md:opacity-100"
                 alt="Cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-pink-600/50 via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-pink-300/30 via-transparent to-transparent"></div>
             </div>
             <CoverParticleEffect />
             <div className="relative w-full md:w-5/12 h-full flex flex-col items-center justify-center p-8 text-center z-10">
@@ -482,7 +507,7 @@ const App = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
-                  className="tracking-[0.5em] text-[10px] mb-4 text-red-600 uppercase font-bold"
+                  className="tracking-[0.5em] text-[10px] mb-4 text-black uppercase font-bold drop-shadow-md"
                 >
                   Wedding Invitation
                 </motion.p>
@@ -500,14 +525,14 @@ const App = () => {
                   Dicky & Kakak
                 </motion.h1>
                 <div className="mb-8">
-                  <p className="text-xs opacity-60 mb-2 text-black">
+                  <p className="text-xs opacity-80 mb-2 text-black drop-shadow">
                     Kepada Yth. Bapak/Ibu/Saudara/i
                   </p>
                   <motion.h2
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.8, duration: 0.6 }}
-                    className="text-2xl font-bold italic text-red-600"
+                    className="text-2xl font-bold italic text-black drop-shadow"
                   >
                     {guestName}
                   </motion.h2>
